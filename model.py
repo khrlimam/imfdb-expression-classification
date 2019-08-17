@@ -18,8 +18,35 @@ class ExpressionClassifier(MobileNetV2):
 
         self.classifier = torch.nn.Sequential(
             torch.nn.Dropout(.2),
-            torch.nn.Linear(self.last_channel, num_classes)
+            torch.nn.Linear(self.last_channel, num_classes),
+            torch.nn.LogSoftmax(dim=1)  # use NLLLoss as the criterion
         )
+
+    def freeze_all(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+    def unfreeze_all(self):
+        for param in self.model.parameters():
+            param.requires_grad = True
+
+    def freeze_only(self, freeze):
+        for name, child in self.model.named_children():
+            if name in freeze:
+                for param in child.parameters():
+                    param.requires_grad = False
+            else:
+                for param in child.parameters():
+                    param.requires_grad = True
+
+    def unfreeze_only(self, unfreeze):
+        for name, child in self.model.named_children():
+            if name in unfreeze:
+                for param in child.parameters():
+                    param.requires_grad = True
+            else:
+                for param in child.parameters():
+                    param.requires_grad = False
 
     def forward(self, x):
         return self.classifier(x)
