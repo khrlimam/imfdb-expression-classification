@@ -77,8 +77,8 @@ def predict(imgpath):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ExpressionClassifier(num_classes=7)
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-model.to(device)
 model = torch.nn.DataParallel(model)
+model.to(device)
 criterion = torch.nn.CrossEntropyLoss()
 
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     epoch = args.epoch
-
+    print("start training")
     for epoch in range(epoch):
         lossses = list()
         accuracies = list()
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         ac = sum(accuracies) / len(accuracies)
         print(epoch, 'valid accuracies', ac)
         torch.save(dict(
-            state=model.cpu().module.state_dict(),
-            optimizer=optimizer.state_dict()
+            state=model.module.state_dict(),
+            optim=optimizer.state_dict()
         ), 'model.pth')
         write(f'{l},{ac}\n')
