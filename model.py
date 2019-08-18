@@ -18,7 +18,7 @@ class ExpressionClassifier(MobileNetV2):
 
         self.classifier = torch.nn.Sequential(
             torch.nn.Dropout(.2),
-            torch.nn.Linear(self.last_channel, num_classes),
+            torch.nn.Linear(62720, num_classes),
             torch.nn.LogSoftmax(dim=1)  # use NLLLoss as the criterion
         )
 
