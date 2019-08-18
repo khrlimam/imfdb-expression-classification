@@ -7,7 +7,7 @@ from dataloader import get_train_valid_data
 from model import ExpressionClassifier
 
 
-def train(model, imgs, lbls):
+def train(model, optimizer, imgs, lbls):
     model.train()
     logits = model(imgs)
     loss = criterion(logits, lbls)
@@ -59,13 +59,16 @@ if __name__ == '__main__':
     try:
         saved_state = torch.load('model.pth')
         model_state = saved_state['state']
-        optim_state = saved_state['optim']
-
         model.load_state_dict(model_state)
-        optimizer.load_state_dict(optim_state)
         print('model loaded!')
     except Exception:
         print('failed load model')
+
+    try:
+        optim_state = saved_state['optim']
+        optimizer.load_state_dict(optim_state)
+    except Exception:
+        print('failed load optimizer state')
 
     model = torch.nn.DataParallel(model)
     criterion = torch.nn.CrossEntropyLoss()
@@ -78,7 +81,7 @@ if __name__ == '__main__':
         lossses = list()
         accuracies = list()
         for idx, (imgs, lbls) in enumerate(train_loader):
-            loss = train(model, imgs.to(device), lbls.to(device))
+            loss = train(model, optimizer, imgs.to(device), lbls.to(device))
             lossses.append(loss)
         l = sum(lossses) / len(lossses)
         for idx, (imgs, lbls) in enumerate(valid_loader):
