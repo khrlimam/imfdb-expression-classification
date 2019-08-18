@@ -48,6 +48,7 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = ExpressionClassifier(num_classes=7)
+    model.to(device)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
     try:
@@ -62,7 +63,6 @@ if __name__ == '__main__':
         pass
 
     model = torch.nn.DataParallel(model)
-    model.to(device)
     criterion = torch.nn.CrossEntropyLoss()
     train_loader, valid_loader = get_train_valid_data(batch_size)
 
