@@ -41,14 +41,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='train')
     parser.add_argument('--epochs', default=200, type=int, help='number of epochs')
     parser.add_argument('--batch-size', default=64, type=int, help='split data into number of batches')
+    parser.add_argument('--learning-rate', default=0.001, type=float, help='use given batch size')
+    parser.add_argument('--momentum', default=0.9, type=float, help='use given momentum')
+
     args = parser.parse_args()
 
     batch_size = args.batch_size
     epochs = args.epochs
+    learning_rate = args.learning_rate
+    momentum = args.momentum
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = ExpressionClassifier(num_classes=7)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     try:
         saved_state = torch.load('model.pth')
