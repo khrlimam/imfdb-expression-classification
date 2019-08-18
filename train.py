@@ -1,4 +1,5 @@
 import argparse
+import time
 
 import torch
 
@@ -62,6 +63,7 @@ if __name__ == '__main__':
 
         model.load_state_dict(model_state)
         optimizer.load_state_dict(optim_state)
+        print('model loaded!')
     except Exception:
         pass
 
@@ -70,6 +72,8 @@ if __name__ == '__main__':
     criterion = torch.nn.CrossEntropyLoss()
     train_loader, valid_loader = get_train_valid_data(batch_size)
 
+    print("start training")
+    start = time.time()
     print('epoch', '\t', 'Train loss', '\t', 'Valid accuracy')
     for epoch in range(epochs):
         lossses = list()
@@ -88,3 +92,4 @@ if __name__ == '__main__':
             optim=optimizer.state_dict()
         ), 'model.pth')
         write(f'{l},{ac}\n')
+    print("Training finished on ", time.time() - start, 'seconds')
