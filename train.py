@@ -59,7 +59,7 @@ if __name__ == '__main__':
         optimizer.load_state_dict(optim_state)
         print('model loaded!')
     except Exception:
-        pass
+        print('failed load model')
 
     model = torch.nn.DataParallel(model)
     model.to(device)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
             accuracy = validate(model, imgs.to(device), lbls.to(device))
             accuracies.append(accuracy)
         ac = (sum(accuracies) / len(accuracies)) / batch_size
-        print(epoch, '\t', l, '\t', ac)
+        print(epoch, '\t', round(l, 5), '\t', round(ac, 5))
         torch.save(dict(
             state=model.module.state_dict(),
             optim=optimizer.state_dict()
