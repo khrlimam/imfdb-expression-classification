@@ -9,9 +9,6 @@ from model import ExpressionClassifier
 
 def train(model, imgs, lbls):
     model.train()
-    imgs = imgs.to(device)
-    lbls = lbls.to(device)
-
     logits = model(imgs)
     loss = criterion(logits, lbls)
 
@@ -24,9 +21,6 @@ def train(model, imgs, lbls):
 def validate(model, imgs, lbls):
     model.eval()
     with torch.no_grad():
-        imgs = imgs.to(device)
-        lbls = lbls.to(device)
-
         logits = model(imgs)
 
         _, predictions = torch.max(logits, 1)
@@ -79,11 +73,11 @@ if __name__ == '__main__':
         lossses = list()
         accuracies = list()
         for idx, (imgs, lbls) in enumerate(train_loader):
-            loss = train(model, imgs, lbls)
+            loss = train(model, imgs.to(device), lbls.to(device))
             lossses.append(loss)
         l = sum(lossses) / len(lossses)
         for idx, (imgs, lbls) in enumerate(valid_loader):
-            accuracy = validate(model, imgs, lbls)
+            accuracy = validate(model, imgs.to(device), lbls.to(device))
             accuracies.append(accuracy)
         ac = (sum(accuracies) / len(accuracies)) / batch_size
         print(epoch, '\t', l, '\t', ac)
