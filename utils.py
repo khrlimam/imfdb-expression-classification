@@ -1,6 +1,10 @@
 from pathlib import Path
 
 import torch
+from PIL import Image
+from matplotlib import pyplot as plt
+
+from dataloader import valid_transforms, totensor
 
 
 class ModelSaver():
@@ -49,3 +53,19 @@ def init_log_just_created(path):
 def init_log_line(path):
     with open(path, 'w') as f:
         f.write('time,epoch,acc,loss,layers,bs,lr\n')
+
+
+def predict(model, imgpath, classes):
+    img = Image.open(imgpath)
+    x = valid_transforms(img)
+
+    model.eval()
+    with torch.no_grad():
+        logits = model(x.unsqueeze(0))
+        _, p = torch.max(logits, 1)
+
+    plt.text(115, 10, classes[p], fontweight='bold', horizontalalignment='center',
+             bbox=dict(facecolor='white'))
+    plt.imshow(totensor(img).permute(1, 2, 0))
+    plt.axis('off')
+    plt.show()

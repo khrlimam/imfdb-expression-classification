@@ -1,88 +1,9 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[89]:
-
-
 import argparse
-from pathlib import Path
 
-import matplotlib.pyplot as plt
 import torch
-from PIL import Image
-from torch.utils.data import DataLoader
-from torchvision import transforms
-from torchvision.datasets import ImageFolder
 
+from dataloader import get_train_valid_data
 from model import ExpressionClassifier
-
-# In[60]:
-
-
-train_transforms = transforms.Compose([
-    transforms.RandomRotation(30),
-    transforms.RandomResizedCrop(224),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225])
-])
-
-valid_transforms = transforms.Compose([
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225])
-])
-topil = transforms.ToPILImage()
-totensor = transforms.Compose(valid_transforms.transforms[:-1])
-
-# In[87]:
-
-
-train_set = ImageFolder(root='/home/khairulimam/datasets/expressions/IMFDB/train/', transform=train_transforms)
-valid_set = ImageFolder(root='/home/khairulimam/datasets/expressions/IMFDB/valid/', transform=valid_transforms)
-test_set = list(Path('/home/khairulimam/datasets/lfw-deepfunneled/').glob('*/*.jpg'))
-train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
-valid_loader = DataLoader(valid_set, batch_size=64, shuffle=True)
-
-# In[83]:
-
-
-classes = valid_set.classes
-
-
-# In[103]:
-
-
-def predict(imgpath):
-    img = Image.open(imgpath)
-    x = valid_transforms(img)
-
-    model.eval()
-    with torch.no_grad():
-        logits = model(x.unsqueeze(0))
-        _, p = torch.max(logits, 1)
-
-    plt.text(115, 10, classes[p], fontweight='bold', horizontalalignment='center',
-             bbox=dict(facecolor='white'))
-    plt.imshow(totensor(img).permute(1, 2, 0))
-    plt.axis('off')
-    plt.show()
-
-
-# In[4]:
-
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = ExpressionClassifier(num_classes=7)
-optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-model = torch.nn.DataParallel(model)
-model.to(device)
-criterion = torch.nn.CrossEntropyLoss()
-
-
-# In[34]:
 
 
 def train(model, imgs, lbls):
@@ -123,26 +44,45 @@ def write(data):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='train')
-
-    parser.add_argument('--epoch', default=200, type=int, help='number of epochs')
-
+    parser.add_argument('--epochs', default=200, type=int, help='number of epochs')
+    parser.add_argument('--batch-size', default=64, type=int, help='split data into number of batches')
     args = parser.parse_args()
 
-    epoch = args.epoch
-    print("start training")
-    for epoch in range(epoch):
+    batch_size = args.batch_size
+    epochs = args.epochs
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = ExpressionClassifier(num_classes=7)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+
+    try:
+        saved_state = torch.load('model.pth')
+        model_state = saved_state['state']
+        optim_state = saved_state['optim']
+
+        model.load_state_dict(model_state)
+        optimizer.load_state_dict(optim_state)
+    except Exception:
+        pass
+
+    model = torch.nn.DataParallel(model)
+    model.to(device)
+    criterion = torch.nn.CrossEntropyLoss()
+    train_loader, valid_loader = get_train_valid_data(batch_size)
+
+    print('epoch', '\t', 'Train loss', '\t', 'Valid accuracy')
+    for epoch in range(epochs):
         lossses = list()
         accuracies = list()
         for idx, (imgs, lbls) in enumerate(train_loader):
             loss = train(model, imgs, lbls)
             lossses.append(loss)
         l = sum(lossses) / len(lossses)
-        print(epoch, 'train loss', l)
         for idx, (imgs, lbls) in enumerate(valid_loader):
             accuracy = validate(model, imgs, lbls)
             accuracies.append(accuracy)
-        ac = sum(accuracies) / len(accuracies)
-        print(epoch, 'valid accuracies', ac)
+        ac = (sum(accuracies) / len(accuracies)) / batch_size
+        print(epoch, '\t', l, '\t', ac)
         torch.save(dict(
             state=model.module.state_dict(),
             optim=optimizer.state_dict()
