@@ -4,6 +4,7 @@
 # In[89]:
 
 
+import argparse
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -42,8 +43,8 @@ totensor = transforms.Compose(valid_transforms.transforms[:-1])
 train_set = ImageFolder(root='/home/khairulimam/datasets/expressions/IMFDB/train/', transform=train_transforms)
 valid_set = ImageFolder(root='/home/khairulimam/datasets/expressions/IMFDB/valid/', transform=valid_transforms)
 test_set = list(Path('/home/khairulimam/datasets/lfw-deepfunneled/').glob('*/*.jpg'))
-train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
-valid_loader = DataLoader(valid_set, batch_size=32, shuffle=True)
+train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
+valid_loader = DataLoader(valid_set, batch_size=64, shuffle=True)
 
 # In[83]:
 
@@ -119,21 +120,31 @@ def write(data):
         f.write(data)
 
 
-for epoch in range(10):
-    lossses = list()
-    accuracies = list()
-    for idx, (imgs, lbls) in enumerate(train_loader):
-        loss = train(model, imgs, lbls)
-        lossses.append(loss)
-    l = sum(lossses) / len(lossses)
-    print(epoch, 'train loss', l)
-    for idx, (imgs, lbls) in enumerate(valid_loader):
-        accuracy = validate(model, imgs, lbls)
-        accuracies.append(accuracy)
-    ac = sum(accuracies) / len(accuracies)
-    print(epoch, 'valid accuracies', ac)
-    torch.save(dict(
-        state=model.cpu().module.state_dict(),
-        optimizer=optimizer.state_dict()
-    ), 'model.pth')
-    write(f'{l},{ac}\n')
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='train')
+
+    parser.add_argument('--epoch', default=200, type=int, help='number of epochs')
+
+    args = parser.parse_args()
+
+    epoch = args.epoch
+
+    for epoch in range(epoch):
+        lossses = list()
+        accuracies = list()
+        for idx, (imgs, lbls) in enumerate(train_loader):
+            loss = train(model, imgs, lbls)
+            lossses.append(loss)
+        l = sum(lossses) / len(lossses)
+        print(epoch, 'train loss', l)
+        for idx, (imgs, lbls) in enumerate(valid_loader):
+            accuracy = validate(model, imgs, lbls)
+            accuracies.append(accuracy)
+        ac = sum(accuracies) / len(accuracies)
+        print(epoch, 'valid accuracies', ac)
+        torch.save(dict(
+            state=model.cpu().module.state_dict(),
+            optimizer=optimizer.state_dict()
+        ), 'model.pth')
+        write(f'{l},{ac}\n')
