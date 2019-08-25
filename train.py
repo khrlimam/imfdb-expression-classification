@@ -4,7 +4,7 @@ import time
 import torch
 
 from dataloader import get_train_valid_data
-from model import ExpressionClassifier
+from model import ExpressionMobileNet, ExpressionSqueezeNet
 
 
 def train(model, optimizer, imgs, lbls):
@@ -43,6 +43,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', default=64, type=int, help='split data into number of batches')
     parser.add_argument('--learning-rate', default=0.001, type=float, help='use given batch size')
     parser.add_argument('--momentum', default=0.9, type=float, help='use given momentum')
+    parser.add_argument('--model', default='mobilenet', type=str,
+                        help='Choose which model to load for training. 1. squeezenet, 2.mobilenet')
 
     args = parser.parse_args()
 
@@ -50,9 +52,10 @@ if __name__ == '__main__':
     epochs = args.epochs
     learning_rate = args.learning_rate
     momentum = args.momentum
+    which_model = args.model
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = ExpressionClassifier(num_classes=7)
+    model = ExpressionMobileNet() if 'mobilenet' else ExpressionSqueezeNet()
     model.to(device)
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
@@ -92,6 +95,6 @@ if __name__ == '__main__':
         torch.save(dict(
             state=model.module.state_dict(),
             optim=optimizer.state_dict()
-        ), 'model.pth')
+        ), f'{which_model}.pth')
         write(f'{l},{ac}\n')
     print("Training finished on ", time.time() - start, 'seconds')
