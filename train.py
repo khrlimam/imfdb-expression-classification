@@ -60,7 +60,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     try:
-        saved_state = torch.load('model.pth')
+        saved_state = torch.load(f'{which_model}.pth')
         model_state = saved_state['state']
         model.load_state_dict(model_state)
         print('model loaded!')
