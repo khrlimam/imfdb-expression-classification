@@ -55,7 +55,7 @@ if __name__ == '__main__':
     which_model = args.model
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = ExpressionMobileNet() if 'mobilenet' else ExpressionSqueezeNet()
+    model = ExpressionMobileNet() if which_model == 'mobilenet' else ExpressionSqueezeNet()
     model.to(device)
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
