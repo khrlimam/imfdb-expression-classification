@@ -43,6 +43,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', default=64, type=int, help='split data into number of batches')
     parser.add_argument('--learning-rate', default=0.001, type=float, help='use given batch size')
     parser.add_argument('--momentum', default=0.9, type=float, help='use given momentum')
+    parser.add_argument('--freeze', type=str, help='freeze given layer names', default='')
     parser.add_argument('--model', default='mobilenet', type=str,
                         help='Choose which model to load for training. 1. squeezenet, 2.mobilenet')
 
@@ -50,6 +51,7 @@ if __name__ == '__main__':
 
     batch_size = args.batch_size
     epochs = args.epochs
+    freeze = args.freeze.split(',')
     learning_rate = args.learning_rate
     momentum = args.momentum
     which_model = args.model
@@ -72,6 +74,11 @@ if __name__ == '__main__':
         optimizer.load_state_dict(optim_state)
     except Exception:
         print('failed load optimizer state')
+
+
+    if freeze:
+        print('freezing given layers: %s' % ', '.join(freeze))
+        model.freeze_only(freeze)
 
     model = torch.nn.DataParallel(model)
     criterion = torch.nn.CrossEntropyLoss()
