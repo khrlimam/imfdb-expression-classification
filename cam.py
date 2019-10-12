@@ -25,9 +25,10 @@ classes = ['MARAH', 'JIJIK', 'TAKUT', 'BAHAGIA', 'BIASA SAJA', 'SEDIH', 'TERKEJU
 
 model = ExpressionSqueezeNet()
 mtcnn = MTCNN(keep_all=True)
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 state = torch.load('imfdb-squeezenet2.pth')
 model.load_state_dict(state)
+model.to(device)
 model.eval()
 
 valid_transforms = transforms.Compose([
@@ -39,7 +40,7 @@ valid_transforms = transforms.Compose([
 ])
 
 def predict(model, img):
-    x = valid_transforms(img)
+    x = valid_transforms(img).to(device)
     with torch.no_grad():
         logits = model(x.unsqueeze(0))
         _, p = torch.max(logits, 1)
